@@ -3,10 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <title>PWA Vercel</title>
 
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#0f172a">
+
   <style>
+  body { font-family: system-ui; background:#020617; color:#e5e7eb; }
+
   #pwa-card {
     position: fixed;
     bottom: 14px;
@@ -58,10 +65,9 @@
 <body>
 
   <h2>PWA Test — Vercel</h2>
-  <p>Halo! Ini PWA dengan Card Banner Install 😎</p>
+  <p>Mode offline siap — tinggal install 😎</p>
 
-
-  <!-- ⭐ Card Banner PWA -->
+  <!-- ⭐ Card Banner -->
   <div id="pwa-card">
     <div class="pwa-card-inner">
       <div class="pwa-info">
@@ -76,25 +82,32 @@
     </div>
   </div>
 
-
-  <!-- ⚙️ Script install handler -->
   <script>
   let deferredPrompt;
 
+  // Jangan tampilkan banner bila sudah ter-install
+  if (window.matchMedia("(display-mode: standalone)").matches) {
+    localStorage.setItem("pwa_dismissed", "1");
+  }
+
   window.addEventListener("beforeinstallprompt", (e) => {
+    console.log("🔥 beforeinstallprompt fired");
     e.preventDefault();
     deferredPrompt = e;
 
-    // jangan tampilkan kalau user pernah klik "Nanti"
+    // jika user pernah klik "Nanti", jangan muncul lagi
     if (localStorage.getItem("pwa_dismissed")) return;
 
     document.getElementById("pwa-card").style.display = "block";
 
     document.getElementById("pwa-install").onclick = async () => {
       document.getElementById("pwa-card").style.display = "none";
-      const result = await deferredPrompt.prompt();
+
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+
+      console.log("Install result:", outcome);
       deferredPrompt = null;
-      console.log("Install outcome:", result.outcome);
     };
 
     document.getElementById("pwa-dismiss").onclick = () => {
@@ -102,6 +115,15 @@
       localStorage.setItem("pwa_dismissed", "1");
     };
   });
+
+  // Register Service Worker
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/service-worker.js")
+        .then(() => console.log("SW registered"))
+        .catch(err => console.log("SW failed:", err));
+    });
+  }
   </script>
 
 </body>
