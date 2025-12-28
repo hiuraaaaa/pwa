@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>PWA Vercel Demo</title>
+
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+</head>
+
+<body>
+  <h1>PWA Vercel 🚀</h1>
+  <p>Versi minimal — tanpa icon.</p>
+
+  <button id="installBtn" hidden>Install App</button>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+
+    let deferredPrompt;
+    const btn = document.getElementById("installBtn");
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btn.hidden = false;
+
+      btn.onclick = async () => {
+        btn.hidden = true;
+        deferredPrompt.prompt();
+        deferredPrompt = null;
+      };
+    });
+  </script>
+</body>
+</html>
