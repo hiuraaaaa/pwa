@@ -1,23 +1,21 @@
-const CACHE_NAME = "pwa-vercel-v1";
-const urlsToCache = ["/"];
+const CACHE = "pwa-vercel-v1";
 
-self.addEventListener("install", (event) => {
+const ASSETS = [
+  "/",
+  "/index.html",
+  "/manifest.json"
+];
+
+self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
   );
-  self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(clients.claim());
-});
-
-self.addEventListener("fetch", (event) => {
+self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then((res) => res || fetch(event.request))
+    caches.match(event.request).then(res =>
+      res || fetch(event.request)
+    )
   );
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
