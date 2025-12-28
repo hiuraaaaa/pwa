@@ -4,69 +4,82 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PWA Vercel</title>
+
+  <!-- Manifest -->
   <link rel="manifest" href="/manifest.json">
+
+  <!-- Theme -->
   <meta name="theme-color" content="#0f172a">
 
   <style>
-  body { font-family: system-ui; background:#020617; color:#e5e7eb; margin:0; padding:0; }
+  body { font-family: system-ui; background:#020617; color:#e5e7eb; }
 
-  /* Card install */
   #pwa-card {
-    position: fixed; bottom:14px; left:50%; transform:translateX(-50%);
-    width:92%; max-width:460px; z-index:9999; display:none; animation: slideUp .25s ease-out;
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 460px;
+    z-index: 9999;
+    display:none;
+    animation: slideUp .25s ease-out;
   }
+
   .pwa-card-inner {
-    background:#0f172acc; backdrop-filter: blur(6px);
-    border:1px solid #1f2937; border-radius:16px; padding:14px 14px 10px;
-    display:flex; justify-content:space-between; gap:10px; color:#f9fafb;
-    box-shadow:0 10px 26px rgba(0,0,0,.35);
+    background: #0f172acc;
+    backdrop-filter: blur(6px);
+    border: 1px solid #1f2937;
+    border-radius: 16px;
+    padding: 14px 14px 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #f9fafb;
+    box-shadow: 0 10px 26px rgba(0,0,0,.35);
   }
+
   .pwa-info { display:flex; flex-direction:column; font-size:13px; }
   .pwa-info strong { font-size:14px; }
+
   .pwa-actions { display:flex; gap:6px; }
+
   .pwa-actions button {
-    border-radius:10px; border:none; padding:8px 12px; font-size:12px; cursor:pointer;
+    border-radius: 10px;
+    border: none;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
   }
+
   #pwa-install { background:#22c55e; color:#022c22; }
   #pwa-dismiss { background:#111827; color:#e5e7eb; }
 
-  @keyframes slideUp { from{transform:translate(-50%,20px);opacity:0} to{transform:translate(-50%,0);opacity:1} }
-
-  /* Update banner */
-  #update-banner {
-    display:none; background:#111827; color:#f9fafb; padding:12px 14px;
-    position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
-    border-radius:14px; border:1px solid #1f2937; z-index:10000;
-  }
-  #update-banner button {
-    margin-left:8px; background:#22c55e; color:#022c22; border:none;
-    border-radius:10px; padding:6px 10px; cursor:pointer;
+  @keyframes slideUp {
+    from { transform: translate(-50%, 20px); opacity:0 }
+    to   { transform: translate(-50%, 0); opacity:1 }
   }
   </style>
 </head>
 
 <body>
+
   <h2>PWA Test — Vercel</h2>
   <p>Mode offline siap — tinggal install 😎</p>
 
-  <!-- Card Install -->
+  <!-- ⭐ Card Banner -->
   <div id="pwa-card">
     <div class="pwa-card-inner">
       <div class="pwa-info">
         <strong>Pasang sebagai Aplikasi</strong>
         <span>Akses lebih cepat & bisa offline</span>
       </div>
+
       <div class="pwa-actions">
         <button id="pwa-install">Install</button>
         <button id="pwa-dismiss">Nanti</button>
       </div>
     </div>
-  </div>
-
-  <!-- Update Banner -->
-  <div id="update-banner">
-    Versi baru tersedia 🚀
-    <button id="refresh-app">Refresh</button>
   </div>
 
   <script>
@@ -77,20 +90,22 @@
     localStorage.setItem("pwa_dismissed", "1");
   }
 
-  // Card Install
   window.addEventListener("beforeinstallprompt", (e) => {
     console.log("🔥 beforeinstallprompt fired");
     e.preventDefault();
     deferredPrompt = e;
 
+    // jika user pernah klik "Nanti", jangan muncul lagi
     if (localStorage.getItem("pwa_dismissed")) return;
 
     document.getElementById("pwa-card").style.display = "block";
 
     document.getElementById("pwa-install").onclick = async () => {
       document.getElementById("pwa-card").style.display = "none";
+
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
+
       console.log("Install result:", outcome);
       deferredPrompt = null;
     };
@@ -101,37 +116,14 @@
     };
   });
 
-  // Service Worker + update banner
+  // Register Service Worker
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/service-worker.js").then(reg => {
-        console.log("SW registered");
-
-        // Show update banner kalau ada SW baru
-        if (reg.waiting) showUpdateBanner(reg);
-
-        reg.addEventListener("updatefound", () => {
-          const newSW = reg.installing;
-          newSW.addEventListener("statechange", () => {
-            if (newSW.state === "installed" && navigator.serviceWorker.controller) {
-              showUpdateBanner(reg);
-            }
-          });
-        });
-      }).catch(err => console.log("SW failed:", err));
+      navigator.serviceWorker.register("/service-worker.js")
+        .then(() => console.log("SW registered"))
+        .catch(err => console.log("SW failed:", err));
     });
   }
-
-  function showUpdateBanner(reg) {
-    const banner = document.getElementById("update-banner");
-    banner.style.display = "block";
-    document.getElementById("refresh-app").onclick = () => {
-      reg.waiting.postMessage({ type: "SKIP_WAITING" });
-    };
-  }
-
-  // Reload page setelah SW aktif
-  navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
   </script>
 
 </body>
